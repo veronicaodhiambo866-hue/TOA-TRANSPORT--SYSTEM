@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOA Driver Portal</title>
+    <style>
+        :root { font-family: Arial, sans-serif; color: #17352d; background: #eef4f1; }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        main { width: min(100% - 28px, 560px); margin: 0 auto; padding: 24px 0 40px; }
+        header { padding: 12px 0 22px; }
+        h1, h2, p { margin: 0; }
+        h1 { font-size: 26px; }
+        h2 { font-size: 20px; margin-bottom: 14px; }
+        .eyebrow { color: #147a58; font-weight: bold; letter-spacing: .08em; font-size: 12px; margin-bottom: 8px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 5px 18px #17352d12; }
+        .assignment { border-top: 5px solid #147a58; }
+        .detail { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e2ebe7; padding: 12px 0; }
+        .detail:last-child { border-bottom: 0; }
+        .detail strong { text-align: right; }
+        button, select, textarea { width: 100%; border-radius: 8px; font: inherit; }
+        button { border: 0; padding: 13px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .primary { background: #147a58; color: white; }
+        .secondary { background: #e5f0eb; color: #147a58; }
+        .danger { background: #f9e3df; color: #a5362d; }
+        select, textarea { border: 1px solid #cadbd4; padding: 11px; margin-top: 8px; }
+        textarea { min-height: 80px; resize: vertical; }
+        .person { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: center; border-bottom: 1px solid #e2ebe7; padding: 12px 0; }
+        .person:last-child { border-bottom: 0; }
+        .person select { margin: 0; }
+        .status { color: #147a58; font-weight: bold; }
+        #message { min-height: 24px; color: #147a58; font-weight: bold; }
+    </style>
+</head>
+<body>
+<main>
+    <header>
+        <div class="eyebrow">TOA CORPORATION</div>
+        <h1>Good morning, Peter</h1>
+        <p>Driver transport portal</p>
+    </header>
+    <section class="card assignment">
+        <h2>Today's Assignment</h2>
+        <div id="assignment"></div>
+        <button class="primary" onclick="changeTrip('In Progress')">START TRIP</button>
+        <button class="secondary" onclick="changeTrip('Completed')">END TRIP</button>
+    </section>
+    <section class="card">
+        <h2>Pickup List</h2>
+        <div id="pickup-list"></div>
+    </section>
+    <section class="card">
+        <h2>Report Problem</h2>
+        <select id="issue-type">
+            <option value="Traffic delay">Traffic delay</option>
+            <option value="Vehicle breakdown">Vehicle breakdown</option>
+            <option value="Fuel problem">Fuel problem</option>
+            <option value="Staff issue">Staff issue</option>
+            <option value="Road blocked">Road blocked</option>
+            <option value="Mechanical problem">Mechanical problem</option>
+            <option value="Other">Other</option>
+        </select>
+        <textarea id="issue-details" placeholder="Add details"></textarea>
+        <button class="danger" onclick="reportProblem()">REPORT PROBLEM</button>
+        <p id="message"></p>
+    </section>
+</main>
+<script>
+let assignment;
+
+async function loadAssignment() {
+    assignment = await (await fetch('/api/driver/assignment')).json();
+    document.getElementById('assignment').innerHTML = `
+        <div class="detail"><span>Vehicle</span><strong>${assignment.vehicle}</strong></div>
+        <div class="detail"><span>Route</span><strong>${assignment.route}</strong></div>
+        <div class="detail"><span>Staff assigned</span><strong>${assignment.staff_assigned}</strong></div>
+        <div class="detail"><span>Departure</span><strong>${assignment.departure_time}</strong></div>
+        <div class="detail"><span>Status</span><strong class="status">${assignment.status}</strong></div>`;
+    document.getElementById('pickup-list').innerHTML = assignment.boarding.map(person => `
+        <div class="person"><div><strong>${person.staff_name}</strong><br><small>${person.pickup_point} · ${person.pickup_time}</small></div>
+        <select onchange="updateBoarding(${person.id}, this.value)">
+            <option ${person.status === 'Waiting' ? 'selected' : ''}>Waiting</option>
+            <option ${person.status === 'Boarded' ? 'selected' : ''}>Boarded</option>
+            <option ${person.status === 'Did not board' ? 'selected' : ''}>Did not board</option>
+        </select></div>`).join('');
+}
+
+async function changeTrip(status) {
+    await fetch('/api/driver/trip', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status})});
+    await loadAssignment();
+}
+
+async function updateBoarding(id, status) {
+    await fetch(`/api/driver/boarding/${id}`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status})});
+    await loadAssignment();
+}
+
+async function reportProblem() {
+    const response = await fetch('/api/driver/issues', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({issue_type: document.getElementById('issue-type').value, details: document.getElementById('issue-details').value})});
+    document.getElementById('message').textContent = response.ok ? 'Problem reported to Transport Admin.' : 'Please add details before reporting.';
+    if (response.ok) document.getElementById('issue-details').value = '';
+}
+
+loadAssignment();
+</script>
+</body>
+</html>

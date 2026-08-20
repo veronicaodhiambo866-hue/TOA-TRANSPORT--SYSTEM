@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOA Staff Transport</title>
+    <style>
+        :root { font-family: Arial, sans-serif; color: #17352d; background: #eef4f1; }
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        main { width: min(100% - 28px, 560px); margin: 0 auto; padding: 24px 0 40px; }
+        header { padding: 12px 0 22px; }
+        h1, h2, p { margin: 0; }
+        h1 { font-size: 26px; }
+        h2 { font-size: 20px; margin-bottom: 14px; }
+        .eyebrow { color: #147a58; font-weight: bold; letter-spacing: .08em; font-size: 12px; margin-bottom: 8px; }
+        .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 16px; box-shadow: 0 5px 18px #17352d12; }
+        .ride { border-top: 5px solid #147a58; }
+        .detail { display: flex; justify-content: space-between; gap: 16px; border-bottom: 1px solid #e2ebe7; padding: 12px 0; }
+        .detail:last-child { border-bottom: 0; }
+        .detail strong { text-align: right; }
+        button, textarea { width: 100%; border-radius: 8px; font: inherit; }
+        button { border: 0; padding: 13px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .primary { background: #147a58; color: white; }
+        .secondary { background: #e5f0eb; color: #147a58; }
+        .danger { background: #f9e3df; color: #a5362d; }
+        textarea { border: 1px solid #cadbd4; padding: 11px; min-height: 80px; resize: vertical; }
+        #message { min-height: 24px; color: #147a58; font-weight: bold; }
+    </style>
+</head>
+<body>
+<main>
+    <header><div class="eyebrow">TOA CORPORATION</div><h1>Welcome to TOA 👋</h1><p>Good morning, Veronica</p></header>
+    <section class="card ride"><h2>Today's Morning Pickup</h2><div id="ride"></div><button class="primary" onclick="confirmRide()">CONFIRM PICKUP</button><button class="secondary" onclick="setStatus('Not travelling')">NOT TRAVELLING</button></section>
+    <section class="card"><h2>Report a Problem</h2><textarea id="problem" placeholder="Tell Transport Admin what happened"></textarea><button class="danger" onclick="reportProblem()">REPORT PROBLEM</button><p id="message"></p></section>
+</main>
+<script>
+async function loadRide() {
+    const staff = await (await fetch('/api/staff')).json();
+    const person = staff[0] || {name: 'Staff member', pickup_point: 'Assigned pickup', route: 'Assigned route'};
+    const schedules = await (await fetch('/api/schedules')).json();
+    const schedule = schedules[0] || {vehicle: 'KBK 348C', departure_time: '06:30 AM', destination: 'TOA Corporation'};
+    document.getElementById('ride').innerHTML = `<div class="detail"><span>Vehicle</span><strong>${schedule.vehicle}</strong></div><div class="detail"><span>Pickup Point</span><strong>${person.pickup_point}</strong></div><div class="detail"><span>Pickup Time</span><strong>${schedule.departure_time}</strong></div><div class="detail"><span>Route</span><strong>${person.route}</strong></div>`;
+}
+async function confirmRide() { await setStatus('Confirmed'); }
+async function setStatus(status) { const response = await fetch('/api/staff/confirmation', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({status})}); document.getElementById('message').textContent = response.ok ? `Pickup status: ${status}` : 'Unable to update pickup status.'; }
+async function reportProblem() { const details = problem.value.trim(); if (!details) { message.textContent = 'Please describe the problem first.'; return; } const response = await fetch('/api/staff/problem', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({details})}); message.textContent = response.ok ? 'Transport Admin has been notified.' : 'Unable to send the report.'; if (response.ok) problem.value = ''; }
+loadRide();
+</script>
+</body>
+</html>

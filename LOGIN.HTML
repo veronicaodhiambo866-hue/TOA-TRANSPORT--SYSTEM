@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOA Transport Login</title>
+    <style>
+        :root { font-family: Arial, sans-serif; color: #153b30; background: #edf4f0; }
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+        main { width: min(100%, 420px); background: #fff; padding: 32px; border-radius: 14px; box-shadow: 0 8px 28px #153b3020; }
+        .eyebrow { color: #147a58; font-size: 12px; font-weight: bold; letter-spacing: .1em; }
+        h1 { margin: 10px 0 6px; }
+        p { color: #61716b; }
+        label { display: block; margin-top: 18px; font-weight: bold; font-size: 14px; }
+        input, button { width: 100%; padding: 13px; border-radius: 8px; font: inherit; }
+        input { border: 1px solid #cbdad4; margin-top: 8px; }
+        button { border: 0; background: #147a58; color: #fff; font-weight: bold; margin-top: 22px; cursor: pointer; }
+        #error { color: #ae3c31; min-height: 22px; }
+        small { display: block; margin-top: 20px; color: #71807a; }
+    </style>
+</head>
+<body>
+<main>
+    <div class="eyebrow">TOA CORPORATION</div>
+    <h1>TOA Transport System</h1>
+    <p>Sign in to open your transport portal.</p>
+    <form onsubmit="signIn(event)">
+        <label>Username<input id="username" required autocomplete="username"></label>
+        <label>Password<input id="password" type="password" required autocomplete="current-password"></label>
+        <button type="submit">Sign in</button>
+    </form>
+    <p id="error"></p>
+    <small>Demo accounts: admin/admin123, peter/driver123</small>
+</main>
+<script>
+async function signIn(event) {
+    event.preventDefault();
+    const response = await fetch('/api/login', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({username: username.value, password: password.value})});
+    const result = await response.json();
+    if (!response.ok) { document.getElementById('error').textContent = result.error; return; }
+    window.location.href = result.redirect;
+}
+</script>
+</body>
+</html>
