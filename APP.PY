@@ -1,5 +1,6 @@
 from functools import wraps
 
+
 from flask import Flask, jsonify, redirect, request, send_from_directory, session, url_for
 
 from DATABASE import (

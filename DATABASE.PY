@@ -100,7 +100,8 @@ def initialize_database():
                 request_type TEXT NOT NULL,
                 details TEXT NOT NULL,
                 status TEXT NOT NULL DEFAULT 'Pending',
-                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                created_at 
+                TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             );
 
             CREATE TABLE IF NOT EXISTS driver_swaps (
